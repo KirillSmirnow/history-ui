@@ -3,6 +3,7 @@ package ru.agibase.web.history;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -11,6 +12,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.agibase.web.history.model.CourseResult;
 import ru.agibase.web.history.model.RatingResult;
 
 @Slf4j
@@ -23,7 +25,7 @@ public class HistoryGrid extends VerticalLayout {
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        setWidth("1200px");
+        setWidth("1400px");
 
         UI.getCurrent().getPage().fetchCurrentURL(url -> {
             QueryParameters.fromString(url.getQuery()).getSingleParameter("sportsmanId").ifPresent(sportsmanId -> {
@@ -42,17 +44,22 @@ public class HistoryGrid extends VerticalLayout {
             grid.addColumn("result.totalFaults").setHeader("Сумма штрафов");
             grid.addColumn("result.place").setHeader("Место");
             grid.setItemDetailsRenderer(new ComponentRenderer<>(CourseResultComponent::new, CourseResultComponent::setItems));
-            grid.setHeight("200px");
+            grid.setHeight("400px");
             grid.setItems(competition.getRatings());
 
             var nameField = new TextField(null, competition.getName(), (String) null);
             nameField.setWidthFull();
             nameField.setReadOnly(true);
+
+            var dateField = new TextField(null, competition.getCompetitionPeriod(), (String) null);
+            dateField.setWidthFull();
+            dateField.setReadOnly(true);
             var venueField = new TextField(null, competition.getVenue().getName(), (String) null);
             venueField.setWidthFull();
             venueField.setReadOnly(true);
+            var secondLayout = new HorizontalLayout(dateField, venueField);
 
-            var layout = new VerticalLayout(nameField, venueField, grid);
+            var layout = new VerticalLayout(nameField, secondLayout, grid);
             layout.setSpacing(false);
             add(layout);
         });
@@ -60,6 +67,17 @@ public class HistoryGrid extends VerticalLayout {
 
     private static class CourseResultComponent extends VerticalLayout {
         public void setItems(RatingResult ratingResult) {
+            var grid = new Grid<>(CourseResult.class, false);
+            grid.setItems(ratingResult.getCourses());
+            grid.addColumn("name").setHeader("Трасса");
+            grid.addColumn("result.timeInSeconds").setHeader("Время");
+            grid.addColumn("result.timeFaults").setHeader("Штраф за время");
+            grid.addColumn("result.courseFaults").setHeader("Штраф по трассе");
+            grid.addColumn("result.speedInMetersPerSecond").setHeader("Скорость");
+            grid.addColumn("result.totalFaults").setHeader("Сумма штрафа");
+            grid.addColumn("result.place").setHeader("Место");
+            grid.setHeight("200px");
+            add(grid);
         }
     }
 }

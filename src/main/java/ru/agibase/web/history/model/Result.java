@@ -11,6 +11,7 @@ public class Result {
     private final BigDecimal timeFaults;
     private final BigDecimal courseFaults;
     private final BigDecimal totalFaults;
+    private final BigDecimal speedInMetersPerSecond;
 
     private final Integer place;
     private final boolean eliminated;
