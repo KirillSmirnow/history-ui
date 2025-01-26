@@ -22,19 +22,19 @@ public class Result {
     public String getPlace() {
         var builder = new StringBuilder();
         if (disqualified) {
-            builder.append("Дисквал.");
+            builder.append("дисквал.");
         } else if (eliminated) {
-            builder.append("Снят");
+            builder.append("снят");
         } else if (absent) {
-            builder.append("Неявка");
+            builder.append("неявка");
         } else if (place != null) {
             builder.append(place);
         }
         if (unrated) {
             if (builder.isEmpty()) {
-                builder.append("Вне зачёта");
+                builder.append("вне зачёта");
             } else {
-                builder.append(" (Вне зачёта)");
+                builder.append(" (вне зачёта)");
             }
         }
         return builder.toString();

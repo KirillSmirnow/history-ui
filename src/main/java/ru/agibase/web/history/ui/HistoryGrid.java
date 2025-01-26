@@ -1,45 +1,48 @@
-package ru.agibase.web.history;
+package ru.agibase.web.history.ui;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.QueryParameters;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.agibase.web.history.ParticipationHistoryClient;
+import ru.agibase.web.history.model.CompetitionResult;
 import ru.agibase.web.history.model.CourseResult;
+import ru.agibase.web.history.model.OffsetQueryResult;
 import ru.agibase.web.history.model.RatingResult;
 
 @Slf4j
-@UIScope
-@Route("")
 @RequiredArgsConstructor
 public class HistoryGrid extends VerticalLayout {
 
+    private static final int PAGE_SIZE = 10;
+
     private final ParticipationHistoryClient participationHistoryClient;
+    private final Type type;
+    private final Long sportsmanId;
+    private final Long dogId;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         setWidth("1400px");
-
-        UI.getCurrent().getPage().fetchCurrentURL(url -> {
-            QueryParameters.fromString(url.getQuery()).getSingleParameter("sportsmanId").ifPresent(sportsmanId -> {
-                refresh(Long.valueOf(sportsmanId));
-            });
-        });
+        refresh();
     }
 
-    private void refresh(Long sportsmanId) {
-        var result = participationHistoryClient.search(sportsmanId, null, 0, 10);
-        result.getContent().forEach(competition -> {
+    private void refresh() {
+        var results = getResults();
+        var totalPages = Math.ceilDiv(results.getTotalElements(), PAGE_SIZE);
+        log.info("Results: {}, total elements: {}, total pages: {}", results.getContent().size(), results.getTotalElements(), totalPages);
+        results.getContent().forEach(competition -> {
             var grid = new Grid<>(RatingResult.class, false);
             grid.addColumn("name").setHeader("Зачёт");
-            grid.addColumn("dog.homeName").setHeader("Собака");
+            if (type == Type.SPORTSMAN) {
+                grid.addColumn("dog.homeName").setHeader("Собака");
+            } else {
+                grid.addColumn("sportsman.name").setHeader("Спортсмен");
+            }
             grid.addColumn("result.timeInSeconds").setHeader("Сумма времени");
             grid.addColumn("result.totalFaults").setHeader("Сумма штрафов");
             grid.addColumn("result.place").setHeader("Место");
@@ -47,22 +50,36 @@ public class HistoryGrid extends VerticalLayout {
             grid.setHeight("400px");
             grid.setItems(competition.getRatings());
 
-            var nameField = new TextField(null, competition.getName(), (String) null);
-            nameField.setWidthFull();
-            nameField.setReadOnly(true);
-
-            var dateField = new TextField(null, competition.getCompetitionPeriod(), (String) null);
-            dateField.setWidthFull();
-            dateField.setReadOnly(true);
-            var venueField = new TextField(null, competition.getVenue().getName(), (String) null);
-            venueField.setWidthFull();
-            venueField.setReadOnly(true);
-            var secondLayout = new HorizontalLayout(dateField, venueField);
-
-            var layout = new VerticalLayout(nameField, secondLayout, grid);
+            var layout = new VerticalLayout(
+                    readableField(competition.getName()),
+                    new HorizontalLayout(readableField(competition.getCompetitionPeriod()), readableField(competition.getVenue().getName())),
+                    grid
+            );
             layout.setSpacing(false);
             add(layout);
         });
+    }
+
+    private OffsetQueryResult<CompetitionResult> getResults() {
+        var page = 0;
+        var offset = page * PAGE_SIZE;
+        return switch (type) {
+            case SPORTSMAN -> participationHistoryClient.search(sportsmanId, null, offset, PAGE_SIZE);
+            case DOG -> participationHistoryClient.search(null, dogId, offset, PAGE_SIZE);
+        };
+    }
+
+    private TextField readableField(String text) {
+        var field = new TextField();
+        field.setValue(text);
+        field.setWidthFull();
+        field.setReadOnly(true);
+        return field;
+    }
+
+    public enum Type {
+        SPORTSMAN,
+        DOG,
     }
 
     private static class CourseResultComponent extends VerticalLayout {
