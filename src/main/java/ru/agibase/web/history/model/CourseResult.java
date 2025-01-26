@@ -2,12 +2,8 @@ package ru.agibase.web.history.model;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class RatingResult {
+public class CourseResult {
     private final String name;
-    private final DogView dog;
     private final Result result;
-    private final List<CourseResult> courses;
 }
