@@ -37,6 +37,7 @@ public class HistoryGrid extends VerticalLayout {
         log.info("Results: {}, total elements: {}, total pages: {}", results.getContent().size(), results.getTotalElements(), totalPages);
         results.getContent().forEach(competition -> {
             var grid = new Grid<>(RatingResult.class, false);
+            grid.setItems(competition.getRatings());
             grid.addColumn("name").setHeader("Зачёт");
             if (type == Type.SPORTSMAN) {
                 grid.addColumn("dog.homeName").setHeader("Собака");
@@ -46,15 +47,16 @@ public class HistoryGrid extends VerticalLayout {
             grid.addColumn("result.timeInSeconds").setHeader("Сумма времени");
             grid.addColumn("result.totalFaults").setHeader("Сумма штрафов");
             grid.addColumn("result.place").setHeader("Место");
+            grid.setAllRowsVisible(true);
             grid.setItemDetailsRenderer(new ComponentRenderer<>(CourseResultComponent::new, CourseResultComponent::setItems));
-            grid.setHeight("400px");
-            grid.setItems(competition.getRatings());
 
-            var layout = new VerticalLayout(
-                    readableField(competition.getName()),
-                    new HorizontalLayout(readableField(competition.getCompetitionPeriod()), readableField(competition.getVenue().getName())),
-                    grid
+            var bar2 = new HorizontalLayout(
+                    readableField(competition.getCompetitionPeriod()),
+                    readableField(competition.getVenue().getName())
             );
+            bar2.setWidthFull();
+
+            var layout = new VerticalLayout(readableField(competition.getName()), bar2, grid);
             layout.setSpacing(false);
             add(layout);
         });
@@ -93,8 +95,9 @@ public class HistoryGrid extends VerticalLayout {
             grid.addColumn("result.speedInMetersPerSecond").setHeader("Скорость");
             grid.addColumn("result.totalFaults").setHeader("Сумма штрафа");
             grid.addColumn("result.place").setHeader("Место");
-            grid.setHeight("200px");
+            grid.setAllRowsVisible(true);
             add(grid);
+            setPadding(false);
         }
     }
 }
