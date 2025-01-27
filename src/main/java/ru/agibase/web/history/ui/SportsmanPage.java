@@ -29,8 +29,17 @@ public class SportsmanPage extends VerticalLayout implements HasUrlParameter<Str
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        var historyGrid = new HistoryGrid(participationHistoryClient, Type.SPORTSMAN, sportsmanId, null);
-        add(historyGrid);
+        var pagination = new Pagination();
+        var historyGrid = new HistoryGrid(
+                participationHistoryClient,
+                Type.SPORTSMAN,
+                sportsmanId,
+                null,
+                pagination::refresh
+        );
+        pagination.setNewPageConsumer(historyGrid::refresh);
+
+        add(pagination, historyGrid);
         setWidthFull();
         setAlignItems(Alignment.CENTER);
     }

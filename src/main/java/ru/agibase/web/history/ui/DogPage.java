@@ -29,8 +29,17 @@ public class DogPage extends VerticalLayout implements HasUrlParameter<String> {
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        var historyGrid = new HistoryGrid(participationHistoryClient, Type.DOG, null, dogId);
-        add(historyGrid);
+        var pagination = new Pagination();
+        var historyGrid = new HistoryGrid(
+                participationHistoryClient,
+                Type.DOG,
+                null,
+                dogId,
+                pagination::refresh
+        );
+        pagination.setNewPageConsumer(historyGrid::refresh);
+
+        add(pagination, historyGrid);
         setWidthFull();
         setAlignItems(Alignment.CENTER);
     }

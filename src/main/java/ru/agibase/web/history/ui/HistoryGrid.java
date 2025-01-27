@@ -14,6 +14,8 @@ import ru.agibase.web.history.model.CourseResult;
 import ru.agibase.web.history.model.OffsetQueryResult;
 import ru.agibase.web.history.model.RatingResult;
 
+import java.util.function.BiConsumer;
+
 @Slf4j
 @RequiredArgsConstructor
 public class HistoryGrid extends VerticalLayout {
@@ -24,17 +26,20 @@ public class HistoryGrid extends VerticalLayout {
     private final Type type;
     private final Long sportsmanId;
     private final Long dogId;
+    private final BiConsumer<Integer, Integer> pageUpdateListener;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         setWidth("1400px");
-        refresh();
+        refresh(0);
     }
 
-    private void refresh() {
-        var results = getResults();
-        var totalPages = Math.ceilDiv(results.getTotalElements(), PAGE_SIZE);
+    public void refresh(int page) {
+        var results = getResults(page);
+        var totalPages = (int) Math.ceilDiv(results.getTotalElements(), PAGE_SIZE);
+        pageUpdateListener.accept(page, totalPages);
         log.info("Results: {}, total elements: {}, total pages: {}", results.getContent().size(), results.getTotalElements(), totalPages);
+        removeAll();
         results.getContent().forEach(competition -> {
             var grid = new Grid<>(RatingResult.class, false);
             grid.setItems(competition.getRatings());
@@ -62,8 +67,7 @@ public class HistoryGrid extends VerticalLayout {
         });
     }
 
-    private OffsetQueryResult<CompetitionResult> getResults() {
-        var page = 0;
+    private OffsetQueryResult<CompetitionResult> getResults(int page) {
         var offset = page * PAGE_SIZE;
         return switch (type) {
             case SPORTSMAN -> participationHistoryClient.search(sportsmanId, null, offset, PAGE_SIZE);
